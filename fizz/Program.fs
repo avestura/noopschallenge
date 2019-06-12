@@ -1,7 +1,9 @@
-﻿open System
+﻿// Noops Challange F# Solution
+// You'll need Json Type Provider in FSharp.Data (https://fsharp.github.io/FSharp.Data/library/JsonProvider.html)
+
+open System
 open FSharp.Data
 open System.Net
-open System.Text
 
 let initialPath = "https://api.noopschallenge.com"
 
@@ -19,11 +21,9 @@ let ResultSample = """
 }
 """
 
-type GameRule =
-    { number : int; response : string }
+type GameRule = { number : int; response : string }
 
-type GameRules = 
-    { rule1 : GameRule; rule2 : GameRule ; rule3 : GameRule option }
+type GameRules =  { rule1 : GameRule; rule2 : GameRule ; rule3 : GameRule option }
 
 let defaultRules =
     { rule1 = {number = 3; response = "Fizz" }
@@ -38,13 +38,6 @@ let load (path:string) = FizzResponse.Load path
 
 let parse (json:string) = FizzResponse.Parse json
 
-let get url =
-    Http.Request (
-        getGameLevel url,
-        httpMethod="GET",
-        headers=["Content-Type", "application/json"]
-    )
-
 let post url answer =
     Http.Request (
         getGameLevel url,
@@ -58,8 +51,7 @@ let getStringOfBody respBody =
     | Text s -> s
     | Binary _ -> ""
 
-let allMods num (nums:int list) =
-    nums |> List.forall (fun x -> num % x = 0)
+let allMods num (nums:int list) = nums |> List.forall (fun x -> num % x = 0)
 
 let fizzBuzz num (r:GameRules) =
     let r1, r2 = r.rule1, r.rule2
@@ -75,14 +67,12 @@ let fizzBuzz num (r:GameRules) =
         | a when a % r2.number = 0 -> r2.response
         | a -> a.ToString()
 
-let fizzBuzzSolver (nums:int []) r =
-    [for i in nums -> fizzBuzz i r ] |> String.concat " "
+let fizzBuzzSolver (nums:int []) r = [for i in nums -> fizzBuzz i r ] |> String.concat " "
 
 
-let rec play path showMessage = 
+let rec play path = 
     let resp = load (getGameLevel path)
-    if showMessage then
-        printfn "%s" resp.Message
+    printfn "%s" resp.Message
     if resp.NextQuestion = "" then
 
         let shouldMachineAnswer = Seq.isEmpty resp.Numbers |> not
@@ -92,9 +82,9 @@ let rec play path showMessage =
             let resp2 = rawResult.Body |> getStringOfBody |> parse
             printfn "\n%s\n" resp2.Message
             if rawResult.StatusCode = 400 then
-                play path true
+                play path
             else if (resp2.Result <> "interview complete") then
-                play resp2.NextQuestion true
+                play resp2.NextQuestion
 
         if shouldMachineAnswer then
             printfn "got: %A" resp.Numbers
@@ -118,10 +108,11 @@ let rec play path showMessage =
             Console.ReadLine() |> sendAnswer
 
     else
-        play resp.NextQuestion true
+        play resp.NextQuestion
 
 
 [<EntryPoint>]
 let main argc =
-    play "/fizzbot" true
-    0
+    play "/fizzbot"
+
+    0 // return 0 as exit result
