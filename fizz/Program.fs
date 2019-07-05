@@ -20,19 +20,19 @@ let ResultSample = """
     ]
 }
 """
+type FizzResponse = JsonProvider<ResultSample>
 
-type GameRule = { number : int; response : string }
+type GameRule = { num : int; resp : string }
 
 type GameRules =  { rule1 : GameRule; rule2 : GameRule ; rule3 : GameRule option }
 
 let defaultRules =
-    { rule1 = {number = 3; response = "Fizz" }
-      rule2 = {number = 5; response = "Buzz" }
+    { rule1 = {num = 3; resp = "Fizz" }
+      rule2 = {num = 5; resp = "Buzz" }
       rule3 = None }
 
 let getGameLevel innerUrl = sprintf "%s%s" initialPath innerUrl
 
-type FizzResponse = JsonProvider<ResultSample>
 
 let load (path:string) = FizzResponse.Load path
 
@@ -46,7 +46,7 @@ let post url answer =
         body = TextRequest (sprintf "{\"answer\":\"%s\"}" answer)
     )
 
-let getStringOfBody respBody = 
+let getStringOfBody respBody =
     match respBody with
     | Text s -> s
     | Binary _ -> ""
@@ -56,28 +56,28 @@ let allMods num (nums:int list) = nums |> List.forall (fun x -> num % x = 0)
 let fizzBuzz num (r:GameRules) =
     let r1, r2 = r.rule1, r.rule2
     match (num , r.rule3) with
-    | (a, Some r3) when allMods a [r1.number; r2.number; r3.number] -> sprintf "%s%s%s" r1.response r2.response r3.response
-    | (a, Some r3) when allMods a [r1.number; r3.number] -> sprintf "%s%s" r1.response r3.response
-    | (a, Some r3) when allMods a [r2.number; r3.number] -> sprintf "%s%s" r2.response r3.response
-    | (a, Some r3) when a % r3.number = 0 -> r3.response
+    | (a, Some r3) when allMods a [r1.num; r2.num; r3.num] -> sprintf "%s%s%s" r1.resp r2.resp r3.resp
+    | (a, Some r3) when allMods a [r1.num; r3.num] -> sprintf "%s%s" r1.resp r3.resp
+    | (a, Some r3) when allMods a [r2.num; r3.num] -> sprintf "%s%s" r2.resp r3.resp
+    | (a, Some r3) when a % r3.num = 0 -> r3.resp
     | (num, _) ->
         match num with
-        | a when allMods a [r1.number; r2.number] -> sprintf "%s%s" r1.response r2.response
-        | a when a % r1.number = 0 -> r1.response
-        | a when a % r2.number = 0 -> r2.response
+        | a when allMods a [r1.num; r2.num] -> sprintf "%s%s" r1.resp r2.resp
+        | a when a % r1.num = 0 -> r1.resp
+        | a when a % r2.num = 0 -> r2.resp
         | a -> a.ToString()
 
 let fizzBuzzSolver (nums:int []) r = [for i in nums -> fizzBuzz i r ] |> String.concat " "
 
 
-let rec play path = 
+let rec play path =
     let resp = load (getGameLevel path)
     printfn "%s" resp.Message
     if resp.NextQuestion = "" then
 
         let shouldMachineAnswer = Seq.isEmpty resp.Numbers |> not
-        
-        let sendAnswer answer = 
+
+        let sendAnswer answer =
             let rawResult = answer |> post path
             let resp2 = rawResult.Body |> getStringOfBody |> parse
             printfn "\n%s\n" resp2.Message
@@ -89,14 +89,14 @@ let rec play path =
         if shouldMachineAnswer then
             printfn "got: %A" resp.Numbers
             let rules =
-                if resp.Rules.Length <> 0 then 
-                    { rule1 = { number = resp.Rules.[0].Number
-                                response = resp.Rules.[0].Response}
-                      rule2 = { number = resp.Rules.[1].Number
-                                response = resp.Rules.[1].Response}
+                if resp.Rules.Length <> 0 then
+                    { rule1 = { num = resp.Rules.[0].Number
+                                resp = resp.Rules.[0].Response}
+                      rule2 = { num = resp.Rules.[1].Number
+                                resp = resp.Rules.[1].Response}
                       rule3 = if resp.Rules.Length >= 3 then
-                                   Some ({ number = resp.Rules.[2].Number
-                                           response = resp.Rules.[2].Response})
+                                   Some ({ num = resp.Rules.[2].Number
+                                           resp = resp.Rules.[2].Response})
                               else None }
                  else defaultRules
 
@@ -109,7 +109,6 @@ let rec play path =
 
     else
         play resp.NextQuestion
-
 
 [<EntryPoint>]
 let main argc =
